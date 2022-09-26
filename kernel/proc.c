@@ -127,6 +127,13 @@ found:
     return 0;
   }
 
+  // Allocate a trapframe page.
+  if((p->tf_bak = (struct trapframe *)kalloc()) == 0){
+    freeproc(p);
+    release(&p->lock);
+    return 0;
+  }
+
   // An empty user page table.
   p->pagetable = proc_pagetable(p);
   if(p->pagetable == 0){
@@ -140,6 +147,11 @@ found:
   memset(&p->context, 0, sizeof(p->context));
   p->context.ra = (uint64)forkret;
   p->context.sp = p->kstack + PGSIZE;
+
+  p->handler = 0;
+  p->ticks = 0;
+  p->ticks_cnt = 0;
+  p->is_alarm = 0;
 
   return p;
 }
@@ -291,6 +303,10 @@ fork(void)
 
   // copy saved user registers.
   *(np->trapframe) = *(p->trapframe);
+  *(np->tf_bak) = *(p->tf_bak);
+  np->handler = 0;
+  np->ticks = 0;
+  np->ticks_cnt = 0;
 
   // Cause fork to return 0 in the child.
   np->trapframe->a0 = 0;

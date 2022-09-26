@@ -104,5 +104,10 @@ struct proc {
   struct context context;      // swtch() here to run process
   struct file *ofile[NOFILE];  // Open files
   struct inode *cwd;           // Current directory
+  void (*handler)();           // The pointer to the handler
+  int ticks;                   // Alarm interval
+  int ticks_cnt;               // How many ticks have passed since the last call
+  struct trapframe* tf_bak;    // Make a tf bak when call handler
+  int is_alarm;                // Calling handler?
   char name[16];               // Process name (debugging)
 };

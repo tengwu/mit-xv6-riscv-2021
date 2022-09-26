@@ -76,6 +76,23 @@ usertrap(void)
   if(p->killed)
     exit(-1);
 
+  // alarm to proc
+  if(which_dev == 2){
+    struct proc* p = myproc();
+    if (p->ticks) {
+      p->ticks_cnt++;
+      if (p->ticks_cnt == p->ticks) {
+        if (!p->is_alarm) {
+          // printf("alarm in proc %d\n", p->pid);
+          memmove(p->tf_bak, p->trapframe, sizeof(struct trapframe));
+          p->is_alarm = 1;
+          p->trapframe->epc = (uint64)p->handler;
+          p->ticks_cnt = 0;
+        }
+      }
+    }
+  }
+
   // give up the CPU if this is a timer interrupt.
   if(which_dev == 2)
     yield();
