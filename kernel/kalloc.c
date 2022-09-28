@@ -23,6 +23,8 @@ struct {
   struct run *freelist;
 } kmem;
 
+int phy_mem_ref[PA2INDEX(PHYSTOP)] = {0};
+
 void
 kinit()
 {
@@ -51,6 +53,9 @@ kfree(void *pa)
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
 
+  if (phy_mem_ref[PA2INDEX(pa)])
+    return;
+
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
 
@@ -74,6 +79,7 @@ kalloc(void)
   r = kmem.freelist;
   if(r)
     kmem.freelist = r->next;
+  phy_mem_ref[PA2INDEX(r)] = 1;
   release(&kmem.lock);
 
   if(r)
